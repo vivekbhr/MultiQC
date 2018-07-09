@@ -182,9 +182,10 @@ goleft_indexcov/ped:
 htseq:
     contents: '__too_low_aQual'
 hicexplorer:
-    contents: 'Min rest. site distance'
+    fn: 'HiCex_QC.log'
+    contents: 'hicBuildMatrix Statistics'
     max_filesize: 4096
-    num_lines: 5
+    num_lines: 2
 hicup:
     fn: 'HiCUP_summary_report*'
 hisat2:
