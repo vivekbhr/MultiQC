@@ -667,8 +667,9 @@ class MultiqcModule(BaseMultiqcModule):
                     if mask_info["Read"] not in indices:
                         indices.append(mask_info["Read"])
                     indices_cycles.append(str(len(mask_info["Cycles"])))
-            indexing = f"{' + '.join(indices_cycles)}<br>{' + '.join(indices)}"
-            result[run_lane]["Indexing"] = indexing
+            result[run_lane]["Indexing"] = (
+                f"{' + '.join(indices_cycles)} &nbsp; <span class='text-muted'>({' + '.join(indices)})</span>"
+            )
             result[run_lane]["AdapterTrimType"] = lane_data.get("AdapterTrimType", "N/A")
             result[run_lane]["R1AdapterMinimumTrimmedLength"] = lane_data.get("R1AdapterMinimumTrimmedLength", "N/A")
             result[run_lane]["R2AdapterMinimumTrimmedLength"] = lane_data.get("R2AdapterMinimumTrimmedLength", "N/A")

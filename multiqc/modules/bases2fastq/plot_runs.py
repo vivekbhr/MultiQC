@@ -3,6 +3,7 @@ from typing import Any, Dict, List, cast
 
 from multiqc.plots import bargraph, linegraph, table
 from multiqc.plots.table_object import ColumnDict, SectionT
+from multiqc.utils import mqc_colour
 from natsort import natsorted
 
 
@@ -370,15 +371,26 @@ def tabulate_manifest_stats(run_data, color_dict):
         run_stats.update({"min_read_length_r2": run_data[s_name]["R2AdapterMinimumTrimmedLength"]})
         plot_content.update({s_name: run_stats})
 
+    # Categorical background colours so identical values share a tint and
+    # different values stand out at a glance.
+    indexing_scale = mqc_colour.mqc_colour_scale("Set2")
+    indexing_values = list({rs["indexing"] for rs in plot_content.values()})
+    indexing_bgcols = {v: indexing_scale.get_colour(i) for i, v in enumerate(indexing_values)}
+
+    adapter_scale = mqc_colour.mqc_colour_scale("Pastel1")
+    adapter_values = list({rs["adapter_trim_type"] for rs in plot_content.values()})
+    adapter_bgcols = {v: adapter_scale.get_colour(i) for i, v in enumerate(adapter_values)}
+
     headers = {}
     headers["indexing"] = {
         "title": "Indexing",
         "description": "Indexing scheme.",
-        "scale": "RdYlGn",
+        "bgcols": indexing_bgcols,
     }
     headers["adapter_trim_type"] = {
         "title": "Adapter Trim Type",
         "description": "Adapter trimming method.",
+        "bgcols": adapter_bgcols,
     }
     headers["min_read_length_r1"] = {
         "title": "Minimum Read Length R1",
