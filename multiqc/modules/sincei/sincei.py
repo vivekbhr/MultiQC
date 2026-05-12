@@ -2,7 +2,7 @@
 
 import logging
 
-from multiqc.base_module import BaseMultiqcModule
+from multiqc.base_module import BaseMultiqcModule, ModuleNoSamplesFound
 
 # sincei modules
 from .scCountQC import scCountQCMixin
@@ -47,7 +47,7 @@ class MultiqcModule(
         if tot > 0:
             log.info("Found {} total sincei reports".format(tot))
         else:
-            raise UserWarning
+            raise ModuleNoSamplesFound
 
     def _int(self, val):
         """Avoids Python3 error:
