@@ -4,7 +4,6 @@ import logging
 import csv
 import numpy as np
 from itertools import groupby
-from collections import OrderedDict
 from multiqc.plots import violin
 
 # Initialise the logger
@@ -33,7 +32,7 @@ class scCountQCMixin:
             # Write data to file
             self.write_data_file(self.sincei_scCountQC, "sincei_count_qc")
 
-            header = OrderedDict()
+            header = dict()
             #            header["SampleName"] = {
             #                "title": "Sample Name",
             #                "description": "Name of Sample"

@@ -4,7 +4,6 @@ import logging
 import csv
 import numpy as np
 from itertools import groupby
-from collections import OrderedDict
 
 from multiqc.plots import violin
 
@@ -34,7 +33,7 @@ class scFilterStatsMixin:
             # Write data to file
             self.write_data_file(self.sincei_scFilterStats, "sincei_read_filtering")
 
-            header = OrderedDict()
+            header = dict()
             header["N Entries"] = {
                 "title": "N entries",
                 "description": "Median number of entries sampled from the file",

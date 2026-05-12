@@ -1,7 +1,6 @@
 """MultiQC module to parse the output from sincei"""
 
 import logging
-from collections import OrderedDict
 
 from multiqc.base_module import BaseMultiqcModule
 
@@ -20,7 +19,7 @@ class MultiqcModule(
 ):
     def __init__(self):
         # Initialise the parent object
-        super(MultiqcModule, self).__init__(
+        super().__init__(
             name="sincei",
             anchor="sincei",
             target="sincei",
@@ -30,7 +29,7 @@ class MultiqcModule(
         )
 
         # Set up class objects to hold parsed data
-        self.general_stats_headers = OrderedDict()
+        self.general_stats_headers = dict()
         self.general_stats_data = dict()
         n = dict()
 
