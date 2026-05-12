@@ -1,7 +1,7 @@
 import logging
 import csv
 
-from multiqc.plots import violin
+from multiqc.plots import table
 
 from ._helpers import group_median_by_cell_prefix
 
@@ -111,7 +111,7 @@ class scCountQCMixin:
                 }
 
             config = {
-                "id": "sincei-scCountQC-plot",
+                "id": "sincei-scCountQC-table",
                 "title": "sincei: scCountQC counting metrics",
                 "namespace": "sincei scCountQC",
             }
@@ -119,10 +119,11 @@ class scCountQCMixin:
                 name="Counting Metrics",
                 anchor="scCountQC",
                 description="Statistics of distribution of counts per cells after counting using `scCountQC`",
-                plot=violin.plot(tdata, header, config),
+                plot=table.plot(tdata, header, config),
             )
+            return len(tdata), len(self.sincei_scCountQC)
 
-        return len(self.sincei_scCountQC)
+        return 0, len(self.sincei_scCountQC)
 
     def parsescCountQCFile(self, f):
         reader = csv.DictReader(f["f"], delimiter="\t")

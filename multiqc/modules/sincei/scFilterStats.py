@@ -1,7 +1,7 @@
 import logging
 import csv
 
-from multiqc.plots import violin
+from multiqc.plots import table
 
 from ._helpers import group_median_by_cell_prefix
 
@@ -56,7 +56,7 @@ class scFilterStatsMixin:
                 "title": "% MAPQ",
                 "suffix": "%",
                 "description": "Percent of alignments having MAPQ scores below the specified threshold (Median of cells)",
-                "scale": "YlOrBn",
+                "scale": "YlOrBr",
                 "min": 0,
                 "max": 100,
             }
@@ -175,7 +175,7 @@ class scFilterStatsMixin:
                     "pct_Low_Aligned_Fraction": v["Low_aligned_fraction"],
                 }
             config = {
-                "id": "sincei-scFilterStats-plot",
+                "id": "sincei-scFilterStats-table",
                 "title": "sincei: scFilterStats filtering metrics",
                 "namespace": "sincei scFilterStats",
             }
@@ -183,10 +183,11 @@ class scFilterStatsMixin:
                 name="Filtering metrics",
                 anchor="scFilterStats",
                 description="Estimated percentages of alignments filtered independently for each setting in `scFilterStats`",
-                plot=violin.plot(tdata, header, config),
+                plot=table.plot(tdata, header, config),
             )
+            return len(tdata), len(self.sincei_scFilterStats)
 
-        return len(self.sincei_scFilterStats)
+        return 0, len(self.sincei_scFilterStats)
 
     def parsescFilterStatsFile(self, f):
         reader = csv.DictReader(f["f"], delimiter="\t")

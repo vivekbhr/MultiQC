@@ -30,9 +30,11 @@ class MultiqcModule(
     - `scFilterStats` (default output file)
     - `scCountQC --outMetrics` (currently the cell-level metrics are supported)
 
-    Each cell (identified by `Cell_ID` in sincei) is treated as a separate
-    sample by MultiQC. Sample/cell names are parsed from the text files
-    themselves rather than from file names.
+    sincei reports one row per cell, identified by `Cell_ID`. MultiQC parses
+    the sample name from the part of `Cell_ID` before `::` and aggregates
+    metrics across cells by taking the median per sample. Each row in the
+    report tables therefore represents one sample, summarising all of its
+    cells.
     """
 
     def __init__(self):
@@ -46,20 +48,22 @@ class MultiqcModule(
             doi="10.5281/zenodo.7853375",
         )
 
-        n = dict()
+        samples = dict()
+        cells = dict()
 
         # scFilterStats
-        n["scFilterStats"] = self.parse_scFilterStats()
-        if n["scFilterStats"] > 0:
-            log.debug(f"Found {n['scFilterStats']} sincei scFilterStats reports")
+        samples["scFilterStats"], cells["scFilterStats"] = self.parse_scFilterStats()
+        if samples["scFilterStats"] > 0:
+            log.debug(f"Found {samples['scFilterStats']} sincei scFilterStats samples ({cells['scFilterStats']} cells)")
 
         # scCountQC
-        n["scCountQC"] = self.parse_scCountQC()
-        if n["scCountQC"] > 0:
-            log.debug(f"Found {n['scCountQC']} sincei scCountQC reports")
+        samples["scCountQC"], cells["scCountQC"] = self.parse_scCountQC()
+        if samples["scCountQC"] > 0:
+            log.debug(f"Found {samples['scCountQC']} sincei scCountQC samples ({cells['scCountQC']} cells)")
 
-        tot = sum(n.values())
-        if tot > 0:
-            log.info(f"Found {tot} total sincei reports")
+        total_samples = sum(samples.values())
+        total_cells = sum(cells.values())
+        if total_samples > 0:
+            log.info(f"Found {total_samples} samples ({total_cells} cells)")
         else:
             raise ModuleNoSamplesFound
