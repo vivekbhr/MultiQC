@@ -1,11 +1,9 @@
-"""MultiQC submodule to parse output from sincei scFilterStats"""
-
 import logging
 import csv
-import numpy as np
-from itertools import groupby
 
 from multiqc.plots import violin
+
+from ._helpers import group_median_by_cell_prefix
 
 # Initialise the logger
 log = logging.getLogger(__name__)
@@ -19,7 +17,7 @@ class scFilterStatsMixin:
             parsed_data = self.parsescFilterStatsFile(f)
             for k, v in parsed_data.items():
                 if k in self.sincei_scFilterStats:
-                    log.warning("Replacing duplicate sample {}.".format(k))
+                    log.warning(f"Replacing duplicate sample {k}.")
                 self.sincei_scFilterStats[k] = v
                 # Superfluous function call to confirm that it is used in this module
                 # Replace None with actual version if it is available
@@ -38,13 +36,6 @@ class scFilterStatsMixin:
                 "title": "N entries",
                 "description": "Median number of entries sampled from the file",
             }
-            header["pct_Aligned"] = {
-                "title": "% Aligned",
-                "description": "Percent of aligned entries (Median of cells)",
-                "scale": "YlGn",
-                "min": 0,
-                "max": 100,
-            }
             header["pct_Filtered"] = {
                 "title": "% Tot. Filtered",
                 "suffix": "%",
@@ -61,7 +52,7 @@ class scFilterStatsMixin:
                 "min": 0,
                 "max": 100,
             }
-            header["pct_MAPQ"] = {
+            header["pct_Below_MAPQ"] = {
                 "title": "% MAPQ",
                 "suffix": "%",
                 "description": "Percent of alignments having MAPQ scores below the specified threshold (Median of cells)",
@@ -141,14 +132,28 @@ class scFilterStatsMixin:
                 "min": 0,
                 "max": 100,
             }
-            kys = list(list(self.sincei_scFilterStats.values())[0].keys())[1:]
+            kys = [
+                "Total_sampled",
+                "Filtered",
+                "Blacklisted",
+                "Low_MAPQ",
+                "Missing_Flags",
+                "Excluded_Flags",
+                "Internal_Duplicates",
+                "Marked_Duplicates",
+                "Singletons",
+                "Wrong_strand",
+                "Wrong_motif",
+                "Unwanted_GC_content",
+                "Low_aligned_fraction",
+            ]
 
-            test_dict = self.getDictVal(self.sincei_scFilterStats, kys[0])
+            test_dict = group_median_by_cell_prefix(self.sincei_scFilterStats, kys[0])
             out = {}
             for k in test_dict.keys():
                 out[k] = dict.fromkeys(kys)
                 for p in kys:
-                    dv = self.getDictVal(self.sincei_scFilterStats, p)
+                    dv = group_median_by_cell_prefix(self.sincei_scFilterStats, p)
                     out[k].update(dv[k])
 
             tdata = dict()
@@ -185,42 +190,17 @@ class scFilterStatsMixin:
 
     def parsescFilterStatsFile(self, f):
         reader = csv.DictReader(f["f"], delimiter="\t")
-        if (
-            len(set(["Total_sampled", "Filtered", "Blacklisted", "Wrong_motif"]).difference(set(reader.fieldnames)))
-            != 0
-        ):
-            # This is not really the output from scFilterStats!
+        required = {"Total_sampled", "Filtered", "Blacklisted", "Wrong_motif"}
+        if required.difference(set(reader.fieldnames)):
             log.warning(
-                "{} was initially flagged as the tabular output from scFilterStats, but that seems to not be the case. Skipping...".format(
-                    f["fn"]
-                )
+                f"{f['fn']} was initially flagged as the tabular output from scFilterStats, but that seems to not be the case. Skipping..."
             )
+            return dict()
 
         d = {}
-        print(reader.fieldnames)
         for row in reader:
             s_name = self.clean_s_name(row["Cell_ID"], f)
             if s_name in d:
-                log.debug("Replacing duplicate cell_id {}.".format(s_name))
-            d[s_name] = dict()
-
-            try:
-                for key in reader.fieldnames:
-                    d[s_name][key] = row[key]
-            except:  # noqa: E722
-                # Obviously this isn't really the output from scFilterStats
-                log.warning(
-                    "{} was initially flagged as the output from scFilterStats, but that seems to not be the case. Skipping...".format(
-                        f["fn"]
-                    )
-                )
-                return dict()
+                log.debug(f"Replacing duplicate cell_id {s_name}.")
+            d[s_name] = {key: row[key] for key in reader.fieldnames}
         return d
-
-    def getDictVal(self, dat, val):
-        dc = groupby(
-            sorted(dat.items(), key=lambda x: x[1]["Cell_ID"].split("::")[0]),
-            lambda x: x[1]["Cell_ID"].split("::")[0],
-        )
-        out = {i: {val: np.median([float(j[1][val]) for j in j])} for i, j in dc}
-        return out

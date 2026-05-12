@@ -1,10 +1,9 @@
-"""MultiQC submodule to parse output from sincei scCountQC"""
-
 import logging
 import csv
-import numpy as np
-from itertools import groupby
+
 from multiqc.plots import violin
+
+from ._helpers import group_median_by_cell_prefix
 
 # Initialise the logger
 log = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ class scCountQCMixin:
             parsed_data = self.parsescCountQCFile(f)
             for k, v in parsed_data.items():
                 if k in self.sincei_scCountQC:
-                    log.warning("Replacing duplicate sample {}.".format(k))
+                    log.warning(f"Replacing duplicate sample {k}.")
                 self.sincei_scCountQC[k] = v
                 # Superfluous function call to confirm that it is used in this module
                 # Replace None with actual version if it is available
@@ -33,10 +32,6 @@ class scCountQCMixin:
             self.write_data_file(self.sincei_scCountQC, "sincei_count_qc")
 
             header = dict()
-            #            header["SampleName"] = {
-            #                "title": "Sample Name",
-            #                "description": "Name of Sample"
-            #                }
             header["n_genes"] = {
                 "title": "# Features",
                 "description": "No. of detected features (bins or genes) with non-zero counts (Median of cells)",
@@ -94,18 +89,18 @@ class scCountQCMixin:
                 "gini_coefficient",
             ]
 
-            test_dict = self.getDictVal(self.sincei_scCountQC, kys[0])
+            test_dict = group_median_by_cell_prefix(self.sincei_scCountQC, kys[0])
             out = {}
             for k in test_dict.keys():
                 out[k] = dict.fromkeys(kys)
                 for p in kys:
-                    dv = self.getDictVal(self.sincei_scCountQC, p)
+                    dv = group_median_by_cell_prefix(self.sincei_scCountQC, p)
                     out[k].update(dv[k])
 
             tdata = dict()
             for k, v in out.items():
                 tdata[k] = {
-                    "SampleName": k,  # v["sample"],
+                    "SampleName": k,
                     "n_genes": v["n_genes_by_counts"],
                     "n_counts_log": v["log1p_total_counts"],
                     "pct_50": v["pct_counts_in_top_50_genes"],
@@ -131,53 +126,17 @@ class scCountQCMixin:
 
     def parsescCountQCFile(self, f):
         reader = csv.DictReader(f["f"], delimiter="\t")
-        if (
-            len(
-                set(
-                    [
-                        "barcodes",
-                        "sample",
-                        "n_genes_by_counts",
-                        "log1p_n_genes_by_counts",
-                    ]
-                ).difference(set(reader.fieldnames))
-            )
-            != 0
-        ):
-            # This is not really the output from scCountQC!
+        required = {"barcodes", "sample", "n_genes_by_counts", "log1p_n_genes_by_counts"}
+        if required.difference(set(reader.fieldnames)):
             log.warning(
-                "{} was initially flagged as the tabular output from scCountQC, but that seems to not be the case. Skipping...".format(
-                    f["fn"]
-                )
+                f"{f['fn']} was initially flagged as the tabular output from scCountQC, but that seems to not be the case. Skipping..."
             )
             return dict()
 
         d = {}
-        print(reader.fieldnames)
-        # collect data
         for row in reader:
-            s_name = self.clean_s_name(row["Cell_ID"], f)  # f["s_name"]
+            s_name = self.clean_s_name(row["Cell_ID"], f)
             if s_name in d:
-                log.debug("Replacing duplicate cell_id {}.".format(s_name))
-            d[s_name] = dict()
-
-            try:
-                for key in reader.fieldnames:
-                    d[s_name][key] = row[key]
-            except:  # noqa: E722
-                # Obviously this isn't really the output from scCountQC
-                log.warning(
-                    "{} was initially flagged as the output from scCountQC, but that seems to not be the case. Skipping...".format(
-                        f["fn"]
-                    )
-                )
-                return dict()
+                log.debug(f"Replacing duplicate cell_id {s_name}.")
+            d[s_name] = {key: row[key] for key in reader.fieldnames}
         return d
-
-    def getDictVal(self, dat, val):
-        dc = groupby(
-            sorted(dat.items(), key=lambda x: x[1]["Cell_ID"].split("::")[0]),
-            lambda x: x[1]["Cell_ID"].split("::")[0],
-        )
-        out = {i: {val: np.median([float(j[1][val]) for j in j])} for i, j in dc}
-        return out
