@@ -61,7 +61,7 @@ class scFilterStatsMixin:
                 "max": 100,
             }
             header["pct_Missing_Flags"] = {
-                "title": "% Missing Flags",
+                "title": "% Missing",
                 "suffix": "%",
                 "description": "Percent of alignments lacking at least on flag specified by --samFlagInclude (Median of cells)",
                 "scale": "PuRd",
@@ -69,7 +69,7 @@ class scFilterStatsMixin:
                 "max": 100,
             }
             header["pct_Forbidden_Flags"] = {
-                "title": "% Forbidden Flags",
+                "title": "% Forbidden",
                 "suffix": "%",
                 "description": "Percent of alignments having at least one flag specified by --samFlagExclude (Median of cells)",
                 "scale": "OrRd",
@@ -77,7 +77,7 @@ class scFilterStatsMixin:
                 "max": 100,
             }
             header["pct_sincei_Dupes"] = {
-                "title": "% sincei Duplicates",
+                "title": "% sincei Dups",
                 "suffix": "%",
                 "description": "Percent of alignments marked by sincei as being duplicates (Median of cells)",
                 "scale": "PuRd",
@@ -85,7 +85,7 @@ class scFilterStatsMixin:
                 "max": 100,
             }
             header["pct_Duplication"] = {
-                "title": "% Duplication",
+                "title": "% Dups",
                 "suffix": "%",
                 "description": "Percent of alignments originally marked as being duplicates (Median of cells)",
                 "scale": "OrRd",
@@ -125,7 +125,7 @@ class scFilterStatsMixin:
                 "max": 100,
             }
             header["pct_Low_Aligned_Fraction"] = {
-                "title": "% Low_Aligned_Fraction",
+                "title": "% Low Aligned Fraction",
                 "suffix": "%",
                 "description": "Percent of alignments where the number of bases that match the reference were lower then desired (Median of cells)",
                 "scale": "PuRd",
@@ -182,9 +182,65 @@ class scFilterStatsMixin:
             self.add_section(
                 name="Filtering metrics",
                 anchor="scFilterStats",
-                description="Estimated percentages of alignments filtered independently for each setting in `scFilterStats`",
+                description=(
+                    "Estimated percentages of alignments filtered for each criterion in "
+                    "[`scFilterStats`](https://sincei.readthedocs.io/en/latest/content/tools/scFilterStats.html)."
+                ),
+                helptext="""
+                `scFilterStats` samples reads from across the genome and estimates how many would
+                be discarded by each filter that sincei applies during downstream analysis.
+
+                **Filters are evaluated independently per alignment**, so the same read can be
+                counted in several columns at once. As the sincei docs note, the sum of these
+                percentages may exceed 100%, and they do not partition the reads into
+                non-overlapping groups.
+
+                The columns (medians across cells in each sample) are:
+
+                - **% Tot. Filtered**: reads that would be removed for *any* reason
+                - **% Blacklisted**: reads overlapping blacklisted regions
+                - **% MAPQ**: alignments below the mapping-quality threshold
+                - **% Missing Flags / % Forbidden Flags**: alignments failing the
+                  `--samFlagInclude` / `--samFlagExclude` filters
+                - **% sincei Duplicates**: duplicates detected by sincei itself
+                - **% Duplication**: reads already marked as duplicates by upstream tools
+                - **% Singletons**: paired-end reads whose mate did not align as a pair
+                - **% Strand / % Motif / % GC / % Low Aligned Fraction**: reads removed by the
+                  strand-, motif-, GC-content-, and aligned-fraction filters
+
+                Each row aggregates one sample (the prefix of `Cell_ID` before `::`) by taking
+                the median across all of its cells.
+                """,
                 plot=table.plot(tdata, header, config),
             )
+
+            # General stats: N entries and % Tot. Filtered (per sample, medians across cells)
+            gs_headers = {
+                "sincei_n_entries": {
+                    "title": "N entries",
+                    "description": "sincei scFilterStats: median number of sampled reads per cell",
+                    "scale": "Greens",
+                    "format": "{:,.0f}",
+                    "min": 0,
+                },
+                "sincei_pct_filtered": {
+                    "title": "% Tot. Filtered",
+                    "description": "sincei scFilterStats: median % of sampled reads filtered for any reason",
+                    "suffix": "%",
+                    "scale": "OrRd",
+                    "min": 0,
+                    "max": 100,
+                },
+            }
+            gs_data = {
+                k: {
+                    "sincei_n_entries": v["N Entries"],
+                    "sincei_pct_filtered": v["pct_Filtered"],
+                }
+                for k, v in tdata.items()
+            }
+            self.general_stats_addcols(gs_data, gs_headers)
+
             return len(tdata), len(self.sincei_scFilterStats)
 
         return 0, len(self.sincei_scFilterStats)

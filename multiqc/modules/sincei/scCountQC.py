@@ -118,9 +118,46 @@ class scCountQCMixin:
             self.add_section(
                 name="Counting Metrics",
                 anchor="scCountQC",
-                description="Statistics of distribution of counts per cells after counting using `scCountQC`",
+                description=(
+                    "Per-cell count distribution metrics from "
+                    "[`scCountQC`](https://sincei.readthedocs.io/en/latest/content/tools/scCountQC.html)."
+                ),
+                helptext="""
+                `scCountQC` computes per-cell quality metrics on a count matrix produced by
+                `scCountReads`, where each row of the matrix is a feature (genomic bin or gene)
+                and each column is a cell.
+
+                The columns shown (medians across cells in each sample) are:
+
+                - **# Features**: number of features with non-zero counts in the cell
+                  (`n_genes_by_counts`, a Scanpy QC metric; effectively the inverse of dropout).
+                - **# Counts (log1p)**: log(1 + total counts) per cell (`log1p_total_counts`).
+                - **% Counts top N**: fraction of a cell's total counts that fall in its top-N
+                  highest-signal features. **These are cumulative**, not partitions:
+                  top-50 ⊂ top-100 ⊂ top-200 ⊂ top-500. They highlight cells where signal is
+                  concentrated in a handful of features.
+                - **Gini Coefficient**: inequality of counts across features within a cell;
+                  1 means counts are concentrated in a few features, 0 means uniform.
+
+                Each row aggregates one sample (the prefix of `Cell_ID` before `::`) by taking
+                the median across all of its cells.
+                """,
                 plot=table.plot(tdata, header, config),
             )
+
+            # General stats: # Features per sample (median across cells)
+            gs_headers = {
+                "sincei_n_features": {
+                    "title": "# Features",
+                    "description": "sincei scCountQC: median number of features with non-zero counts per cell",
+                    "scale": "RdBu",
+                    "format": "{:,.0f}",
+                    "min": 0,
+                },
+            }
+            gs_data = {k: {"sincei_n_features": v["n_genes"]} for k, v in tdata.items()}
+            self.general_stats_addcols(gs_data, gs_headers)
+
             return len(tdata), len(self.sincei_scCountQC)
 
         return 0, len(self.sincei_scCountQC)
