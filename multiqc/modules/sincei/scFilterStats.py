@@ -169,7 +169,11 @@ class scFilterStatsMixin:
                     "pct_Excluded_GC": v["Unwanted_GC_content"],
                     "pct_Low_Aligned_Fraction": v["Low_aligned_fraction"],
                 }
-            config = {"namespace": "sincei scFilterStats", "max_table_rows": 10000}
+            config = {
+                "id": "sincei-scFilterStats-plot",
+                "title": "sincei: scFilterStats filtering metrics",
+                "namespace": "sincei scFilterStats",
+            }
             self.add_section(
                 name="Filtering metrics",
                 anchor="scFilterStats",

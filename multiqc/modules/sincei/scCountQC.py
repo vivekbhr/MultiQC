@@ -115,7 +115,11 @@ class scCountQCMixin:
                     "gini_coefficient": v["gini_coefficient"],
                 }
 
-            config = {"namespace": "sincei scCountQC", "max_table_rows": 10000}
+            config = {
+                "id": "sincei-scCountQC-plot",
+                "title": "sincei: scCountQC counting metrics",
+                "namespace": "sincei scCountQC",
+            }
             self.add_section(
                 name="Counting Metrics",
                 anchor="scCountQC",
