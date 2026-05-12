@@ -52,28 +52,28 @@ class scCountQCMixin:
             header["pct_50"] = {
                 "title": "% Counts top 50",
                 "description": "Percent of alignments in top 50 features (Median of cells)",
-                "scale": "RdYlBu_r",
+                "scale": "RdYlBu-rev",
                 "min": 0,
                 "max": 100,
             }
             header["pct_100"] = {
                 "title": "% Counts top 100",
                 "description": "Percent of alignments in top 100 features (Median of cells)",
-                "scale": "BrBG_r",
+                "scale": "BrBG-rev",
                 "min": 0,
                 "max": 100,
             }
             header["pct_200"] = {
                 "title": "% Counts top 200",
                 "description": "Percent of alignments in top 200 features (Median of cells)",
-                "scale": "RdYlBu_r",
+                "scale": "RdYlBu-rev",
                 "min": 0,
                 "max": 100,
             }
             header["pct_500"] = {
                 "title": "% Counts top 500",
                 "description": "Percent of alignments in top 500 features (Median of cells)",
-                "scale": "PuOr_r",
+                "scale": "PuOr-rev",
                 "min": 0,
                 "max": 100,
             }
